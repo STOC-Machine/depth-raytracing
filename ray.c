@@ -42,17 +42,17 @@ void castRay(double ray[3], const double point[3], const double cam[3]) {
 
 void incrementVoxelGrid(int grid[X_BOXES][Y_BOXES][Z_BOXES], double location[3]) {
     // Map location to voxel grid coordinates
-    int boxX = floor(location[0] / VOXELSIZE);
-    int boxY = floor(location[1] / VOXELSIZE);
-    int boxZ = floor(location[2] / VOXELSIZE);
-    int voxelCoordinates[3];
-    vec3set(boxX, boxY, boxZ, voxelCoordinates);
+    double boxX = floor(location[0] / VOXELSIZE);
+    double boxY = floor(location[1] / VOXELSIZE);
+    double boxZ = floor(location[2] / VOXELSIZE);
+    double voxelCoordinates[3];
+    vec3Set(boxX, boxY, boxZ, voxelCoordinates);
 
     // Since the camera is at voxel locations x=0, y=max/2, z=max/2, we need to
     // offset our coordinates to match.
-    int camCoordinateOffset[3];
-    vec3set(0, Y_BOXES/2, Z_BOXES/2, &camCoordinateOffset);
-    int gridCoordinates[3];
+    double camCoordinateOffset[3];
+    vec3Set(0, Y_BOXES/2, Z_BOXES/2, camCoordinateOffset);
+    double gridCoordinates[3];
     vecAdd(3, camCoordinateOffset, voxelCoordinates, gridCoordinates);
 
     // Ensure that the coordinate is inside the voxel grid
@@ -67,16 +67,15 @@ void incrementVoxelGrid(int grid[X_BOXES][Y_BOXES][Z_BOXES], double location[3])
     }
 }
 
-void main() {
+int main() {
+    printf("Hello there\n");
     int voxelGrid[X_BOXES][Y_BOXES][Z_BOXES];
 
     // Camera defined to be at origin, pointed directly in +x direction
     double cam[3];
-    vec3set(0, 0, 0, &cam);
+    vec3Set(0.0, 0.0, 0.0, cam);
 
     // The position of an arbitrary point in camera space, coordinates in meters
     double point[3];
-    vec3Set(1.3, 4.2, 7.3, &point);
-
-
+    vec3Set(1.3, 4.2, 7.3, point);
 }
