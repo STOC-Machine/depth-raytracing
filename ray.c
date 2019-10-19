@@ -8,8 +8,8 @@
 #define VOXELSIZE 0.1
 
 // Length on the ray to be looked at on either side of the point
-// Arbitrarily choose 2 voxels
-#define DELTA 0.2
+// Arbitrarily choose 3 * voxel edge length
+#define DELTA 0.3
 
 /* Voxel grid geometry
 In front of the camera: x, extends all 100 boxes from origin in +x direction
@@ -48,6 +48,7 @@ void incrementVoxelGrid(int grid[X_BOXES][Y_BOXES][Z_BOXES], double location[3])
     double voxelCoordinates[3];
     vec3Set(boxX, boxY, boxZ, voxelCoordinates);
 
+    // Get grid coordinates of location
     // Since the camera is at voxel locations x=0, y=max/2, z=max/2, we need to
     // offset our coordinates to match.
     double camCoordinateOffset[3];
@@ -56,25 +57,31 @@ void incrementVoxelGrid(int grid[X_BOXES][Y_BOXES][Z_BOXES], double location[3])
     vecAdd(3, camCoordinateOffset, voxelCoordinates, gridCoordinates);
 
     // Ensure that the coordinate is inside the voxel grid
-    if (gridCoordinates[0] >= X_BOXES) {
+    if (gridCoordinates[0] >= X_BOXES || gridCoordinates[0] < 0) {
         exit(1);
     }
-    if (gridCoordinates[1] >= Y_BOXES) {
+    if (gridCoordinates[1] >= Y_BOXES || gridCoordinates[1] < 0) {
         exit(1);
     }
-    if (gridCoordinates[2] >= Z_BOXES) {
+    if (gridCoordinates[2] >= Z_BOXES || gridCoordinates[2] < 0) {
         exit(1);
     }
 }
 
 int main() {
-    printf("Hello there\n");
+    printf("Hello there, I am a raytracer!\n");
     int voxelGrid[X_BOXES][Y_BOXES][Z_BOXES];
+    initializeVoxelGrid(voxelGrid, X_BOXES, Y_BOXES, Z_BOXES);
+
+
+    // To test:
+    // set a camera and arbitrary point in space to be intersected with
+    // the ray algorithm.
+    // Cast a ray and run the intersection code
 
     // Camera defined to be at origin, pointed directly in +x direction
     double cam[3];
     vec3Set(0.0, 0.0, 0.0, cam);
-
     // The position of an arbitrary point in camera space, coordinates in meters
     double point[3];
     vec3Set(1.3, 4.2, 7.3, point);
