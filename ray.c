@@ -23,6 +23,13 @@ Up/down from the camera: z, extends 50 boxes in +z (up) and 50 in -z
 #include "vector.c"
 #include "matrix.c"
 
+void getVoxelCoordinates(const double location[3], int voxelCoordinates[3]) {
+    // Map location to voxel grid coordinates
+    voxelCoordinates[0] = floor(location[0] / VOXELSIZE);
+    voxelCoordinates[1] = floor(location[1] / VOXELSIZE);
+    voxelCoordinates[2] = floor(location[2] / VOXELSIZE);
+}
+
 void initializeVoxelGrid(int grid[X_BOXES][Y_BOXES][Z_BOXES], const int width, const int height, const int depth) {
     for(int i = 0; i < width; i++) {
         for(int j = 0; j < width; j++) {
@@ -33,38 +40,61 @@ void initializeVoxelGrid(int grid[X_BOXES][Y_BOXES][Z_BOXES], const int width, c
     }
 }
 
-void castRay(double ray[3], const double point[3], const double cam[3]) {
-    double unscaledRay[3];
-    double scaledRay[3];
-    vecSubtract(3, point, cam, unscaledRay);
-    vecUnit(3, unscaledRay, scaledRay);
+void incrementVoxelGrid(int grid[X_BOXES][Y_BOXES][Z_BOXES], int coordinates[3],
+        int increment) {
+    // Ensure that the coordinate is inside the voxel grid
+    if (coordinates[0] >= X_BOXES || coordinates[0] < 0) {
+        exit(1);
+    }
+    if (coordinates[1] >= Y_BOXES || coordinates[1] < 0) {
+        exit(1);
+    }
+    if (coordinates[2] >= Z_BOXES || coordinates[2] < 0) {
+        exit(1);
+    }
+    grid[coordinates[0]][coordinates[1]][coordinates[2]] += increment;
 }
 
-void incrementVoxelGrid(int grid[X_BOXES][Y_BOXES][Z_BOXES], double location[3]) {
-    // Map location to voxel grid coordinates
-    double boxX = floor(location[0] / VOXELSIZE);
-    double boxY = floor(location[1] / VOXELSIZE);
-    double boxZ = floor(location[2] / VOXELSIZE);
-    double voxelCoordinates[3];
-    vec3Set(boxX, boxY, boxZ, voxelCoordinates);
+void castPointRay(double ray[3], const double point[3], const double cam[3]) {
+    vecSubtract(3, point, cam, ray);
+}
 
-    // Get grid coordinates of location
-    // Since the camera is at voxel locations x=0, y=max/2, z=max/2, we need to
-    // offset our coordinates to match.
-    double camCoordinateOffset[3];
-    vec3Set(0, Y_BOXES/2, Z_BOXES/2, camCoordinateOffset);
-    double gridCoordinates[3];
-    vecAdd(3, camCoordinateOffset, voxelCoordinates, gridCoordinates);
 
-    // Ensure that the coordinate is inside the voxel grid
-    if (gridCoordinates[0] >= X_BOXES || gridCoordinates[0] < 0) {
-        exit(1);
-    }
-    if (gridCoordinates[1] >= Y_BOXES || gridCoordinates[1] < 0) {
-        exit(1);
-    }
-    if (gridCoordinates[2] >= Z_BOXES || gridCoordinates[2] < 0) {
-        exit(1);
+void updateDelta(double delta[3], const double pointUnit[3], const int limitingCoord) {
+     double vectorTravelled[3];
+     vecScale(3, delta[limitingCoord] / pointUnit[limitingCoord],
+        delta, vectorTravelled);
+    vecSubtract(3, delta, vectorTravelled, delta);
+    delta[limitingCoord] = VOXELSIZE;
+}
+
+void castPositiveDelta(const double point[3], int grid[X_BOXES][Y_BOXES][Z_BOXES]) {
+    double pointUnit[3];
+    vecUnit(3, pointUnit, pointUnit);
+    // First iteration: special case, since it's at the point p instead of
+    // a voxel grid boundary
+    // Set delta, the vector cast from the current point to the next voxel boundary,
+    // from the initial point
+    double delta[3];
+    double deltaX = fmod(point[0], VOXELSIZE);
+    double deltaY = fmod(point[1], VOXELSIZE);
+    double deltaZ = fmod(point[2], VOXELSIZE);
+    vec3Set(deltaX, deltaY, deltaZ, delta);
+    // Set voxel coordinates at intitial point
+    int voxelCoordinates[3];
+    getVoxelCoordinates(point, voxelCoordinates);
+    incrementVoxelGrid(grid, voxelCoordinates, 1);
+
+    if (delta[0] < delta[1] && delta[0] < delta[2]) {
+        // Hits x (0 index) boundary first
+        updateDelta(delta, pointUnit, 0);
+
+    } else if (delta[1] < delta[0] && delta[1] < delta[2]) {
+        // Hits y (1 index) boundary first
+        updateDelta(delta, pointUnit, 1);
+    } else if (delta[2] < delta[0] && delta[2] < delta[1]) {
+        // Hits z (2 index) boundary first
+        updateDelta(delta, pointUnit, 2);
     }
 }
 

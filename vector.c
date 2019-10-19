@@ -18,7 +18,8 @@ void vecAdd(int dim, const double v[], const double w[], double vPlusW[]) {
 	}
 }
 
-/* Subtracts the dim-dimensional vectors v and w. */
+/* Subtracts the dim-dimensional vectors v and w.
+The output can safely alias the input. */
 void vecSubtract(int dim, const double v[], const double w[],
 		double vMinusW[]) {
 	int i;
