@@ -5,6 +5,7 @@
 #define Y_BOXES 100
 #define Z_BOXES 100
 // Assume all voxels are cubic of this side length (in meters):
+// dividing SPACEEDGE / BOXES
 #define VOXELSIZE 0.1
 
 // Length on the ray to be looked at on either side of the point
@@ -66,12 +67,18 @@ void incrementVoxelGrid(int grid[X_BOXES][Y_BOXES][Z_BOXES], int coordinates[3],
         int increment) {
     // Ensure that the coordinate is inside the voxel grid
     if (coordinates[0] >= X_BOXES || coordinates[0] < 0) {
+        printf("Invalid voxel coordinate: (%i, %i, %i)\n",
+            coordinates[0], coordinates[1], coordinates[2]);
         exit(1);
     }
     if (coordinates[1] >= Y_BOXES || coordinates[1] < 0) {
+        printf("Invalid voxel coordinate: (%i, %i, %i)\n",
+            coordinates[0], coordinates[1], coordinates[2]);
         exit(1);
     }
     if (coordinates[2] >= Z_BOXES || coordinates[2] < 0) {
+        printf("Invalid voxel coordinate: (%i, %i, %i)\n",
+            coordinates[0], coordinates[1], coordinates[2]);
         exit(1);
     }
     grid[coordinates[0]][coordinates[1]][coordinates[2]] += increment;
@@ -100,7 +107,7 @@ double castToNextVoxel(double delta[3], const double pointUnit[3],
 
     // Increment voxel coordinates by crossing the boundary
     //TODO negative vs positive directions?
-    voxelCoordinates[limitingCoord] += 1;
+        voxelCoordinates[limitingCoord] += 1;
 
     // Return distance travelled in this iteration
     return distanceTravelled;
@@ -112,7 +119,11 @@ void castPositiveDelta(const double point[3], int grid[X_BOXES][Y_BOXES][Z_BOXES
     // First iteration: special case, since it's at the point p instead of
     // a voxel grid boundary
     // Set delta, the vector cast from the current point to the next voxel
-    // boundary, from the initial point
+    // boundary, from the initial point. Note, this works with negative
+    // locations. If a coordinate is negative ("below" the camera, assumed to be
+    // at the origin for now), its delta will be negative coming from fmod. This
+    // is what we want, since the distance to be travelled is in the negative
+    // direction.
     double delta[3];
     double deltaX = fmod(point[0], VOXELSIZE);
     double deltaY = fmod(point[1], VOXELSIZE);
@@ -124,6 +135,7 @@ void castPositiveDelta(const double point[3], int grid[X_BOXES][Y_BOXES][Z_BOXES
     incrementVoxelGrid(grid, voxelCoordinates, 1);
     int limitingCoordinate = findLimitingCoordinate(delta, pointUnit);
     double distanceTravelled = castToNextVoxel(delta, pointUnit, voxelCoordinates, limitingCoordinate);
+    printf("Total distance travelled: %f\n", distanceTravelled);
 
     // Remaining iterations
     assert(distanceTravelled <= DELTA && "Delta ray cast does not leave a voxel?");
@@ -149,14 +161,15 @@ int main() {
     // the ray algorithm.
     // Cast a ray and run the intersection code
 
+    printf("floor(-2.3) = %f\n", floor(-2.3));
+
     // Camera defined to be at origin, pointed directly in +x direction
     double cam[3];
     vec3Set(0.0, 0.0, 0.0, cam);
     // The position of an arbitrary point in camera space, coordinates in meters
     double point[3];
-    vec3Set(1.3, 4.2, 7.3, point);
-
-    printf("Testing. With point:  (%f, %f, %f).\n", point[0], point[1], point[2]);
+    vec3Set(-1.3, 4.2, 7.3, point);
+    printf("Testing. With point:  (%f, %f, %f),\n", point[0], point[1], point[2]);
     printf("              camera: (%f, %f, %f).\n", cam[0], cam[1], cam[2]);
     int pointVoxelTest[3];
     getVoxelCoordinates(point, pointVoxelTest);
