@@ -100,10 +100,10 @@ So what goes into the algorithm?
 - So the first intersection is the coordinate where this is smallest.
 - If this is greater than `δ` (the distance to be travelled on either side of the point), we can ignore that coordinate permanently. The boundary will never be hit. (So if `Δq/uq > δ`)
 - If a coordinate in `u` is 0, then we have a divide by 0 error. We need to check for this manually.
-- To account for this, we can implement a check that `Δq > uq * δ`. This is just rearranging the equation above. It also handles the divide by 0 case in a way that's less likely to overflow.
+- To account for this, we can implement a check that `Δq >= uq * δ`. This is just rearranging the equation above. It also handles the divide by 0 case in a way that's less likely to overflow.
 - So, the algorithm:
   - Calculate the scale values (call it `nextBoundaryLength`?)
-  - Run the check. If `Δq > uq * δ`, then set its `nextBoundaryLength` to a large number (say, `δ + 1`) so it will not be chosen.
+  - Run the check. If `Δq >= uq * δ`, then set its `nextBoundaryLength` to a large number (say, `δ + 1`) so it will not be chosen.
     - Do we need to check that this works? Will we be guaranteed that at least one coordinate will be less than δ? *It should*.
 
 ### A new way of updating Δ by vectors

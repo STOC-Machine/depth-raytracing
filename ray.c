@@ -46,7 +46,7 @@ int findLimitingCoordinate(double delta[3], double pointUnit[3]) {
     for (int i = 0; i < 3; i++) {
         nextBoundaryLength[i] = delta[i] / pointUnit[i];
         // Check for overflows and divide by 0
-        if (delta[i] > pointUnit[i] * DELTA) {
+        if (delta[i] >= pointUnit[i] * DELTA) {
             nextBoundaryLength[i] = DELTA + 1;
         }
 
