@@ -40,6 +40,27 @@ void initializeVoxelGrid(int grid[X_BOXES][Y_BOXES][Z_BOXES], const int width, c
     }
 }
 
+int findLimitingCoordinate(double delta[3], double pointUnit[3]) {
+    double nextBoundaryLength[3];
+    int limitingCoordinate = 0;
+    for (int i = 0; i < 3; i++) {
+        nextBoundaryLength[i] = delta[i] / pointUnit[i];
+        // Check for overflows and divide by 0
+        if (delta[i] > pointUnit[i] * DELTA) {
+            nextBoundaryLength[i] = DELTA + 1;
+        }
+
+        // Select smallest coordinate: if this is smaller than the previous
+        // smallest length, use it. This behavior is ill-defined for the 0th
+        // iteration, but it doesn't matter because limitingCoordinate will be 0
+        // at the end no matter what
+        if (nextBoundaryLength[i] < nextBoundaryLength[limitingCoordinate]) {
+            limitingCoordinate = i;
+        }
+    }
+    return limitingCoordinate;
+}
+
 void incrementVoxelGrid(int grid[X_BOXES][Y_BOXES][Z_BOXES], int coordinates[3],
         int increment) {
     // Ensure that the coordinate is inside the voxel grid
@@ -86,16 +107,8 @@ void castPositiveDelta(const double point[3], int grid[X_BOXES][Y_BOXES][Z_BOXES
     getVoxelCoordinates(point, voxelCoordinates);
     incrementVoxelGrid(grid, voxelCoordinates, 1);
 
-    if (delta[0] < delta[1] && delta[0] < delta[2]) {
-        // Hits x (0 index) boundary first
-        updateDelta(delta, pointUnit, 0);
-    } else if (delta[1] < delta[0] && delta[1] < delta[2]) {
-        // Hits y (1 index) boundary first
-        updateDelta(delta, pointUnit, 1);
-    } else if (delta[2] < delta[0] && delta[2] < delta[1]) {
-        // Hits z (2 index) boundary first
-        updateDelta(delta, pointUnit, 2);
-    }
+    int limitingCoordinate = findLimitingCoordinate(delta, pointUnit);
+    updateDelta(delta, pointUnit, limitingCoordinate);
 }
 
 int main() {
