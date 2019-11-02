@@ -74,6 +74,9 @@ void incrementVoxelGrid(int grid[X_BOXES][Y_BOXES][Z_BOXES], int coordinates[3],
         exit(1);
     }
     grid[coordinates[0]][coordinates[1]][coordinates[2]] += increment;
+
+    printf("Incrementing voxel (%i, %i, %i) by %i.\n",
+        coordinates[0], coordinates[1], coordinates[2], increment);
 }
 
 void castPointRay(double ray[3], const double point[3], const double cam[3]) {
@@ -95,8 +98,8 @@ void castPositiveDelta(const double point[3], int grid[X_BOXES][Y_BOXES][Z_BOXES
     vecUnit(3, point, pointUnit);
     // First iteration: special case, since it's at the point p instead of
     // a voxel grid boundary
-    // Set delta, the vector cast from the current point to the next voxel boundary,
-    // from the initial point
+    // Set delta, the vector cast from the current point to the next voxel
+    // boundary, from the initial point
     double delta[3];
     double deltaX = fmod(point[0], VOXELSIZE);
     double deltaY = fmod(point[1], VOXELSIZE);
@@ -128,4 +131,13 @@ int main() {
     // The position of an arbitrary point in camera space, coordinates in meters
     double point[3];
     vec3Set(1.3, 4.2, 7.3, point);
+
+    printf("Testing. With point:  (%f, %f, %f).\n", point[0], point[1], point[2]);
+    printf("              camera: (%f, %f, %f).\n", cam[0], cam[1], cam[2]);
+    int pointVoxelTest[3];
+    getVoxelCoordinates(point, pointVoxelTest);
+    printf("Point is at voxel (%i, %i, %i)\n",
+        pointVoxelTest[0], pointVoxelTest[1], pointVoxelTest[2]);
+    castPositiveDelta(point, voxelGrid);
+    //TODO test 0 component
 }
