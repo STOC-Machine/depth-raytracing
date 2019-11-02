@@ -118,6 +118,11 @@ So what goes into the algorithm?
   - `d = (Δq0 / uq) u`
 - Then, set `Δq = D`, since it now has to travel across an entire voxel in the q direction (otherwise, the value should say 0)
 
+### Issues with negative-direction ray casts
+
+- The current voxel grid system can only represent the first octant of space (all coordinates positive). I need to expand the system so that it can include the rest.
+- Otherwise, the currently implemented system to increment `Δ` and find limiting coordinates, etc should work.
+
 ## Testing
 
 Assuming camera starts at (0,0) in voxel and coordinate space

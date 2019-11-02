@@ -1,6 +1,7 @@
 // 3D point space: cubic with this side length (in meters)
 #define SPACEEDGE 10
 
+// This many voxels per dimension
 #define X_BOXES 100
 #define Y_BOXES 100
 #define Z_BOXES 100
@@ -27,9 +28,9 @@ Up/down from the camera: z, extends 50 boxes in +z (up) and 50 in -z
 
 void getVoxelCoordinates(const double location[3], int voxelCoordinates[3]) {
     // Map location to voxel grid coordinates
-    voxelCoordinates[0] = floor(location[0] / VOXELSIZE);
-    voxelCoordinates[1] = floor(location[1] / VOXELSIZE);
-    voxelCoordinates[2] = floor(location[2] / VOXELSIZE);
+    voxelCoordinates[0] = floor(location[0] / VOXELSIZE) + (X_BOXES / 2);
+    voxelCoordinates[1] = floor(location[1] / VOXELSIZE) + (Y_BOXES / 2);
+    voxelCoordinates[2] = floor(location[2] / VOXELSIZE) + (Z_BOXES / 2);
 }
 
 void initializeVoxelGrid(int grid[X_BOXES][Y_BOXES][Z_BOXES], const int width, const int height, const int depth) {
@@ -42,15 +43,23 @@ void initializeVoxelGrid(int grid[X_BOXES][Y_BOXES][Z_BOXES], const int width, c
     }
 }
 
-int findLimitingCoordinate(double delta[3], double pointUnit[3]) {
+int findLimitingCoordinate(const double delta[3], const double pointUnit[3]) {
     double nextBoundaryLength[3];
     int limitingCoordinate = 0;
     for (int i = 0; i < 3; i++) {
-        nextBoundaryLength[i] = delta[i] / pointUnit[i];
-        // Check for overflows and divide by 0
-        if (delta[i] >= pointUnit[i] * DELTA) {
+        if (fabs(delta[i]) >= fabs(pointUnit[i] * DELTA)) {
             nextBoundaryLength[i] = DELTA + 1;
+        } else {
+            nextBoundaryLength[i] = delta[i] / pointUnit[i];
+            // printf("I'm doing division!!!!!!!!!!!!!!!!!!\n");
         }
+        assert(nextBoundaryLength >= 0 && "nextBoundaryLength negative?");
+        // Check for overflows and divide by 0
+        // printf("delta, q=%i: %f\n", i, delta[i]);
+        // printf("pointUnit, q=%i: %f\n", i, pointUnit[i]);
+        // printf("nextBoundaryLength, q=%i: %f\n", i, nextBoundaryLength[i]);
+        // printf("delta[i] / pointUnit[i]:      %f\n", delta[i] / pointUnit[i]);
+        // printf("fabs(delta[i] / pointUnit[i]): %f\n", fabs(delta[i] / pointUnit[i]));
 
         // Select smallest coordinate: if this is smaller than the previous
         // smallest length, use it. This behavior is ill-defined for the 0th
@@ -60,6 +69,7 @@ int findLimitingCoordinate(double delta[3], double pointUnit[3]) {
             limitingCoordinate = i;
         }
     }
+    printf("Limiting coordinate: %i\n", limitingCoordinate);
     return limitingCoordinate;
 }
 
@@ -101,13 +111,22 @@ double castToNextVoxel(double delta[3], const double pointUnit[3],
     // Update delta (distances to next voxels in each dimension)
     double vectorTravelled[3];
     double distanceTravelled = delta[limitingCoord] / pointUnit[limitingCoord];
+    assert(distanceTravelled >= 0 && "Negative distance travelled?");
     vecScale(3, distanceTravelled, pointUnit, vectorTravelled);
     vecSubtract(3, delta, vectorTravelled, delta);
-    delta[limitingCoord] = VOXELSIZE;
+    if (pointUnit[limitingCoord] > 0) {
+        delta[limitingCoord] = VOXELSIZE;
+    } else {
+        delta[limitingCoord] = -VOXELSIZE;
+    }
 
     // Increment voxel coordinates by crossing the boundary
-    //TODO negative vs positive directions?
+    if (pointUnit[limitingCoord] < 0) {
+        voxelCoordinates[limitingCoord] -= 1;
+
+    } else {
         voxelCoordinates[limitingCoord] += 1;
+    }
 
     // Return distance travelled in this iteration
     return distanceTravelled;
@@ -135,10 +154,10 @@ void castPositiveDelta(const double point[3], int grid[X_BOXES][Y_BOXES][Z_BOXES
     incrementVoxelGrid(grid, voxelCoordinates, 1);
     int limitingCoordinate = findLimitingCoordinate(delta, pointUnit);
     double distanceTravelled = castToNextVoxel(delta, pointUnit, voxelCoordinates, limitingCoordinate);
-    printf("Total distance travelled: %f\n", distanceTravelled);
+    printf("Total distance travelled: %f\n\n", distanceTravelled);
 
     // Remaining iterations
-    assert(distanceTravelled <= DELTA && "Delta ray cast does not leave a voxel?");
+    assert(distanceTravelled <= sqrt(2)*DELTA && "Delta ray cast does not leave a voxel?");
     while (distanceTravelled < DELTA) {
         // Increment the voxel that has just been entered
         incrementVoxelGrid(grid, voxelCoordinates, 1);
@@ -147,6 +166,7 @@ void castPositiveDelta(const double point[3], int grid[X_BOXES][Y_BOXES][Z_BOXES
         limitingCoordinate = findLimitingCoordinate(delta, pointUnit);
         distanceTravelled += castToNextVoxel(delta, pointUnit, voxelCoordinates, limitingCoordinate);
         printf("Total distance travelled: %f\n", distanceTravelled);
+        printf("\n");
     }
 }
 
@@ -168,12 +188,12 @@ int main() {
     vec3Set(0.0, 0.0, 0.0, cam);
     // The position of an arbitrary point in camera space, coordinates in meters
     double point[3];
-    vec3Set(-1.3, 4.2, 7.3, point);
+    vec3Set(-1.3, -4.2, -2.3, point);
     printf("Testing. With point:  (%f, %f, %f),\n", point[0], point[1], point[2]);
     printf("              camera: (%f, %f, %f).\n", cam[0], cam[1], cam[2]);
     int pointVoxelTest[3];
     getVoxelCoordinates(point, pointVoxelTest);
-    printf("Point is at voxel (%i, %i, %i).\n",
+    printf("Point is at voxel (%i, %i, %i).\n\n",
         pointVoxelTest[0], pointVoxelTest[1], pointVoxelTest[2]);
     castPositiveDelta(point, voxelGrid);
     //TODO test 0 component
