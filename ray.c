@@ -59,18 +59,19 @@ void castPointRay(double ray[3], const double point[3], const double cam[3]) {
     vecSubtract(3, point, cam, ray);
 }
 
-
+/* Finds the new distances to the next voxel boundaries, after a cast limited by one coordinate.
+*/
 void updateDelta(double delta[3], const double pointUnit[3], const int limitingCoord) {
      double vectorTravelled[3];
      vecScale(3, delta[limitingCoord] / pointUnit[limitingCoord],
-        delta, vectorTravelled);
+        pointUnit, vectorTravelled);
     vecSubtract(3, delta, vectorTravelled, delta);
     delta[limitingCoord] = VOXELSIZE;
 }
 
 void castPositiveDelta(const double point[3], int grid[X_BOXES][Y_BOXES][Z_BOXES]) {
     double pointUnit[3];
-    vecUnit(3, pointUnit, pointUnit);
+    vecUnit(3, point, pointUnit);
     // First iteration: special case, since it's at the point p instead of
     // a voxel grid boundary
     // Set delta, the vector cast from the current point to the next voxel boundary,
@@ -88,7 +89,6 @@ void castPositiveDelta(const double point[3], int grid[X_BOXES][Y_BOXES][Z_BOXES
     if (delta[0] < delta[1] && delta[0] < delta[2]) {
         // Hits x (0 index) boundary first
         updateDelta(delta, pointUnit, 0);
-
     } else if (delta[1] < delta[0] && delta[1] < delta[2]) {
         // Hits y (1 index) boundary first
         updateDelta(delta, pointUnit, 1);
