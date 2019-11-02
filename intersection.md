@@ -69,23 +69,26 @@ So what goes into the algorithm?
     - Will hit an X (vertical) boundary
   - Else:
     - Will hit a Y (horizontal) boundary
+  - Update Δ
+  - Increment total distance travelled (should just be the distance for this iteration, since it's first).
   - Increment the current voxel
     - Divide each coordinate of p by D and round down
     - So calling the voxel coordinate vector g:
       - `gx = floor(px / D)`
       - `gy = floor(py / D)`
 - Further iterations:
-  - If x > proj (p + δ, x) or y > proj (p + δ, y):
-    - This vector cast has led us outside δ. Ignore the current grid.
   - If Δx < Δy:
     - Will hit an X (vertical) boundary
     - Modify Δx, Δy: update Δ
   - Else:
     - Will hit a Y (horizontal) boundary
     - Modify Δx, Δy: update Δ
-  - Increment the next voxel (which is just being entered at the boundary)
+    - Increment the total distance travelled
+  - If `totalDistance > δ`, don't increment the next voxel. This iteration has left the vector, so the next voxel will not actually be entered. This can be a break condition.
+  - Else:
+    - Increment the next voxel (which is just being entered at the boundary)
      - To get the grid location:
-        - I should store this in a vector (say `g`).
+        - I should store this in a vector (say `g`, called `voxelCoordinates` in code).
         - If I hit a y boundary, then I have entered a new y voxel.
           - Increment g_y by +1
           - Change voxel value at that location
