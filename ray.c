@@ -197,4 +197,14 @@ int main() {
         pointVoxelTest[0], pointVoxelTest[1], pointVoxelTest[2]);
     castPositiveDelta(point, voxelGrid);
     //TODO test 0 component
+
+    vec3Set(-1.3, 0, 0, point);
+    printf("Testing. With point:  (%f, %f, %f),\n", point[0], point[1], point[2]);
+    printf("              camera: (%f, %f, %f).\n", cam[0], cam[1], cam[2]);
+    pointVoxelTest[3];
+    getVoxelCoordinates(point, pointVoxelTest);
+    printf("Point is at voxel (%i, %i, %i).\n\n",
+        pointVoxelTest[0], pointVoxelTest[1], pointVoxelTest[2]);
+    castPositiveDelta(point, voxelGrid);
+    //TODO test 0 component
 }
