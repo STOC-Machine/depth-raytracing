@@ -79,21 +79,10 @@ So what goes into the algorithm?
     - This vector cast has led us outside δ. Ignore the current grid.
   - If Δx < Δy:
     - Will hit an X (vertical) boundary
-    - Modify Δx, Δy:
-      - Δy = Δy0 - dy where Δy0 is the existing value of Δy:
-        - dy = uy * (Δx0 / ux)
-          - From the unit vector of the ray (u), we calculate how long the vector is to the next voxel boundary. Call it Δ
-          - This is a scaled version of u: scaled by the factor Δx0 / ux (since our vector is limited by Δx0)
-          - So dy = uy * scale factor, which is the y component of the Δ vector. We can ignore the rest of the scaling calculations because this is the only one that's relevant (so let's make it faster).
-        - So overall calculation: `Δy = Δy0 - uy * (Δx0 / ux)`
-      - `Δx = D` (since it will have to cross an entire voxel horizontally)
-        - Do this after finding Δy, since that depends on the original value of Δx0
+    - Modify Δx, Δy: update Δ
   - Else:
     - Will hit a Y (horizontal) boundary
-    - Modify Δx, Δy:
-      - `Δx = Δx0 - ux * (Δy0 / uy)` (using the same logic as above, but limited by Δy0)
-      - `Δy = D` (since it will have to cross an entire voxel vertically)
-        - Do this after finding Δx, since that depends on the original value of Δx0
+    - Modify Δx, Δy: update Δ
   - Increment the next voxel (which is just being entered at the boundary)
      - To get the grid location:
         - I should store this in a vector (say `g`).
@@ -108,11 +97,11 @@ So what goes into the algorithm?
 ### A new way of updating Δ by vectors
 
 - This should be much nicer to work with in 3D, although a little slower than if we optimized perfectly to ignore unnecessary calculations
-- Input: the vector Δ0, the vector u, the limiting coordinate q
+- Input: the vector Δ0 (the distances to the voxel boundaries before the latest iteration), the vector u (a unit vector in the direction of the ray), the limiting coordinate q
 - Like above, the new `Δ = Δ0 - d`, where d is the vector traveled along the path to the voxel boundary
-- d is u scaled to match limiting Δq
+- d is u scaled to match the limiting Δq
   - `d = (Δq0 / uq) u`
-- Then, set `Δq = D` as before, since it now has to travel across an entire voxel in the q direction
+- Then, set `Δq = D`, since it now has to travel across an entire voxel in the q direction (otherwise, the value should say 0)
 
 ## Testing
 
