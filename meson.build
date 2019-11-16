@@ -8,6 +8,7 @@ m_dep = cc.find_library('m', required : false)
 sources = [
 #    'matrix.c',
     'ray.c',
+    'voxelGrid.h',
 #    'vector.c'
 ]
 
