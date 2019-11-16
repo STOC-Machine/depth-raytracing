@@ -16,5 +16,7 @@ dependencies = [
 ]
 
 executable('depth-raytracing', sources,
-  dependencies: dependencies
+  dependencies: dependencies,
+  install: true,
 )
+

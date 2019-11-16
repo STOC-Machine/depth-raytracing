@@ -47,6 +47,8 @@ int findLimitingCoordinate(const double delta[3], const double pointUnit[3]) {
     double nextBoundaryLength[3];
     int limitingCoordinate = 0;
     for (int i = 0; i < 3; i++) {
+        //TODO This is garbage according to clang:
+        //                        |------------|
         if (fabs(delta[i]) >= fabs(pointUnit[i] * DELTA)) {
             nextBoundaryLength[i] = DELTA + 1;
         } else {
@@ -201,7 +203,6 @@ int main() {
     vec3Set(-1.3, 0, 0, point);
     printf("Testing. With point:  (%f, %f, %f),\n", point[0], point[1], point[2]);
     printf("              camera: (%f, %f, %f).\n", cam[0], cam[1], cam[2]);
-    pointVoxelTest[3];
     getVoxelCoordinates(point, pointVoxelTest);
     printf("Point is at voxel (%i, %i, %i).\n\n",
         pointVoxelTest[0], pointVoxelTest[1], pointVoxelTest[2]);
