@@ -23,6 +23,7 @@ Up/down from the camera: z, extends 50 boxes in +z (up) and 50 in -z
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdbool.h>
 #include "vector.c"
 #include "matrix.c"
 
@@ -75,28 +76,32 @@ int findLimitingCoordinate(const double delta[3], const double pointUnit[3]) {
     return limitingCoordinate;
 }
 
-void incrementVoxelGrid(int grid[X_BOXES][Y_BOXES][Z_BOXES], int coordinates[3],
+/* Return: success status. Fails if a the coordinates fall outside the grid. */
+bool incrementVoxelGrid(int grid[X_BOXES][Y_BOXES][Z_BOXES], int coordinates[3],
         int increment) {
+
+    printf("Incrementing voxel (%i, %i, %i) by %i...\n",
+        coordinates[0], coordinates[1], coordinates[2], increment);
+
     // Ensure that the coordinate is inside the voxel grid
     if (coordinates[0] >= X_BOXES || coordinates[0] < 0) {
         printf("Invalid voxel coordinate: (%i, %i, %i)\n",
             coordinates[0], coordinates[1], coordinates[2]);
-        exit(1);
+        return false;
     }
     if (coordinates[1] >= Y_BOXES || coordinates[1] < 0) {
         printf("Invalid voxel coordinate: (%i, %i, %i)\n",
             coordinates[0], coordinates[1], coordinates[2]);
-        exit(1);
+        return false;
     }
     if (coordinates[2] >= Z_BOXES || coordinates[2] < 0) {
         printf("Invalid voxel coordinate: (%i, %i, %i)\n",
             coordinates[0], coordinates[1], coordinates[2]);
-        exit(1);
+        return false;
     }
-    grid[coordinates[0]][coordinates[1]][coordinates[2]] += increment;
 
-    printf("Incrementing voxel (%i, %i, %i) by %i.\n",
-        coordinates[0], coordinates[1], coordinates[2], increment);
+    grid[coordinates[0]][coordinates[1]][coordinates[2]] += increment;
+    return true;
 }
 
 void castPointRay(double ray[3], const double point[3], const double cam[3]) {
@@ -162,13 +167,22 @@ void castPositiveDelta(const double point[3], int grid[X_BOXES][Y_BOXES][Z_BOXES
     assert(distanceTravelled <= sqrt(2)*DELTA && "Delta ray cast does not leave a voxel?");
     while (distanceTravelled < DELTA) {
         // Increment the voxel that has just been entered
-        incrementVoxelGrid(grid, voxelCoordinates, 1);
-
-        // Cast until the next voxel
-        limitingCoordinate = findLimitingCoordinate(delta, pointUnit);
-        distanceTravelled += castToNextVoxel(delta, pointUnit, voxelCoordinates, limitingCoordinate);
-        printf("Total distance travelled: %f\n", distanceTravelled);
-        printf("\n");
+        bool success = incrementVoxelGrid(grid, voxelCoordinates, 1);
+        // If this successfully incremented a voxel, continue to the next.
+        // If not, we have left the voxel grid. No further iterations are
+        // necessary, since they will all be outside the grid.
+        if (success) {
+            // Cast until the next voxel
+            limitingCoordinate = findLimitingCoordinate(delta, pointUnit);
+            distanceTravelled += castToNextVoxel(delta, pointUnit, voxelCoordinates, limitingCoordinate);
+            printf("\n");
+            printf("Total distance travelled: %f\n", distanceTravelled);
+            printf("Moving to next voxel.\n");
+        } else {
+            printf("Left voxel grid: at voxel coordinates (%i, %i, %i)\n",
+                   voxelCoordinates[0], voxelCoordinates[1], voxelCoordinates[2]);
+            break;
+        }
     }
 }
 
@@ -208,4 +222,14 @@ int main() {
         pointVoxelTest[0], pointVoxelTest[1], pointVoxelTest[2]);
     castPositiveDelta(point, voxelGrid);
     //TODO test 0 component
+
+    // Test edge of grid
+    vec3Set(-1.3, 0, 4.9, point);
+    printf("\n-----------------------------\n");
+    printf("Testing. With point:  (%f, %f, %f),\n", point[0], point[1], point[2]);
+    printf("              camera: (%f, %f, %f).\n", cam[0], cam[1], cam[2]);
+    getVoxelCoordinates(point, pointVoxelTest);
+    printf("Point is at voxel (%i, %i, %i).\n\n",
+        pointVoxelTest[0], pointVoxelTest[1], pointVoxelTest[2]);
+    castPositiveDelta(point, voxelGrid);
 }
